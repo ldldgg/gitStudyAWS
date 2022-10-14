@@ -1,0 +1,20 @@
+다이나믹 sql or 쿼리
+
+<set>
+	<if test="email != ''">EMAIL = #{email},</if>
+	<if test="name != ''">MNAME = #{name},</if>
+	MOD_DATE = SYSDATE
+</set>
+
+<set>
+	<if test="조건">sql문</if>
+	<if test="조건">sql문</if>
+</set>
+
+set태그는 update문의 set절을 만들 때 사용
+조건이 참인 if의 내용은 set절에 포함된다
+
+if태그는 어떤 값의 상태를 검사하여 참일 경우에만 sql문을 포함하고 싶을 때 사용
+test 속성에 지정된 조건이 참이면 if태그의 내용을 반환한다
+
+jstl 태그들과 비슷
