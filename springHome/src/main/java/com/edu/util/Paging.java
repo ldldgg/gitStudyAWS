@@ -8,7 +8,7 @@ public class Paging implements Serializable {
 	private static final int PAGE_SCALE = 5;
 	private static final int BLOCK_SCALE = 3;
 	
-	private int curPage;
+	private int curPage;	// 현재 페이지
 	
 	private int totPage; 	// 전체 페이지
 	private int totBlock;	// 전체 블록
@@ -36,7 +36,7 @@ public class Paging implements Serializable {
 	}
 	
 	public void setBlockRange() {
-		curBlock = (int)Math.ceil((double)curPage / BLOCK_SCALE);
+		curBlock = (curPage - 1) / BLOCK_SCALE + 1;
 		
 		blockBegin = (curBlock - 1) * BLOCK_SCALE + 1;
 		
@@ -78,7 +78,7 @@ public class Paging implements Serializable {
 	}
 
 	public void setTotPage(int count) {
-		totPage = (int)Math.ceil((double)count / PAGE_SCALE);
+		totPage = (count - 1) / PAGE_SCALE + 1;
 	}
 
 	public int getTotBlock() {
@@ -86,7 +86,7 @@ public class Paging implements Serializable {
 	}
 
 	public void setTotBlock() {
-		totBlock = (int)Math.ceil((double)totPage / BLOCK_SCALE);
+		totBlock = (totPage - 1) / BLOCK_SCALE + 1;
 	}
 
 	public int getCurBlock() {

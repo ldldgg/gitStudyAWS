@@ -19,7 +19,7 @@
 		FROM (SELECT ROWNUM RNUM, MNO, MNAME, EMAIL, CRE_DATE
 		     FROM (SELECT MNO, MNAME, EMAIL, CRE_DATE
 		          FROM MEMBER
-		          ORDER BY CRE_DATE DESC))
+		          ORDER BY MNO DESC))
 		WHERE RNUM BETWEEN #{start} AND #{end}
 	</select>
 	
@@ -35,10 +35,16 @@
 		WHERE EMAIL = #{email} AND PWD = #{pwd}
 	</select>
 	
-	<insert id="memberInsertOne" parameterType="memberDto">
+	<insert id="memberInsertOne"
+		 parameterType="com.edu.member.model.MemberDto"
+		 useGeneratedKeys="true" keyProperty="no">
+		 <selectKey keyProperty="no" resultType="int" order="BEFORE">
+		 	SELECT MEMBER_MNO_SEQ.NEXTVAL 
+		 	FROM DUAL
+		 </selectKey>
 		INSERT INTO MEMBER
 		VALUE(MNO, EMAIL, PWD, MNAME, CRE_DATE, MOD_DATE)
-		VALUES(MEMBER_MNO_SEQ.NEXTVAL, #{email}, #{password}
+		VALUES(#{no}, #{email}, #{password}
 			, #{name}, SYSDATE, SYSDATE)
 	</insert>
 
@@ -51,13 +57,51 @@
 
 	<update id="memberUpdateOne" parameterType="memberDto">
 		UPDATE MEMBER
-		SET MNAME = #{name}, EMAIL = #{email}, MOD_DATE = SYSDATE
+		<set>
+		<if test="name != ''">
+			MNAME = #{name},
+		</if>
+		<if test="email != ''">
+			EMAIL = #{email},
+		</if>
+		<if test="password != ''">
+			PWD = #{password},
+		</if>
+		MOD_DATE = SYSDATE
+		</set>
 		WHERE MNO = #{no}
 	</update>
 
 	<delete id="memberDeleteOne" parameterType="int">
 		DELETE MEMBER
 		WHERE MNO = #{value}
+	</delete>
+	
+	<insert id="insertFile" parameterType="map">
+		INSERT INTO TB_FILE
+		(IDX, PARENT_SEQ, ORIGINAL_FILE_NAME,
+		STORED_FILE_NAME, FILE_SIZE, CRE_DATE)
+		VALUES(TB_FILE_IDX_SEQ.NEXTVAL, #{parentSeq}, #{original_file_name},
+			#{stored_file_name}, #{file_size}, SYSDATE)
+	</insert>
+	
+	<select id="fileSelectList" parameterType="int" resultType="map">
+		SELECT IDX, ORIGINAL_FILE_NAME, STORED_FILE_NAME,
+	    ROUND(FILE_SIZE/1024, 1) AS FILE_SIZE
+		FROM TB_FILE
+		WHERE PARENT_SEQ = #{no}
+	</select>
+	
+	<select id="fileSelectStoredFileName" parameterType="int"
+		resultType="map">
+		SELECT IDX, STORED_FILE_NAME
+		FROM TB_FILE
+		WHERE PARENT_SEQ = #{parentSeq}
+	</select>
+	
+	<delete id="fileDelete" parameterType="int">
+		DELETE TB_FILE
+		WHERE PARENT_SEQ = #{parentSeq}
 	</delete>
 
 </mapper>

@@ -18,11 +18,17 @@ table, tr, td, th {
 table {
 	border-collapse: collapse;
 }
+body{
+	background-image: url('/springHome/resources/img/mussledog.png');
+	background-repeat: no-repeat;
+	background-size: cover;
+}
 
 </style>
 </head>
 
 <body>
+
 	<form action="./list.do" method="get" id="pagingForm">
 		<input type="hidden" name="curPage" id="curPage" value="${pagingMap.memberPaging.curPage}">
 	</form>
@@ -48,7 +54,7 @@ table {
 			<c:forEach var="memberDto" items="${memberList}">
 				<tr>
 					<td>${memberDto.no}</td>
-					<td><a href='./update.do?no=${memberDto.no}'>${memberDto.name}</a>
+					<td><a href='./one.do?no=${memberDto.no}'>${memberDto.name}</a>
 					</td>
 					<td>${memberDto.email}</td>
 					<td><fmt:formatDate pattern="yyyy-MM-dd hh:mm"

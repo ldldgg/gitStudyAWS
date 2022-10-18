@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.edu.member.model.MemberDto;
 import com.edu.member.service.MemberService;
@@ -29,6 +30,7 @@ public class MemberController {
 	@Autowired
 	private MemberService memberService;
 	
+	// 로그인화면
 	@RequestMapping(value = "/auth/login.do", method = RequestMethod.GET)
 	public String login(HttpSession session, Model model) {
 		logger.info("Welcome MemberController login! ");
@@ -37,6 +39,7 @@ public class MemberController {
 		return "auth/LoginForm";
 	}
 	
+	// 로그인
 	@RequestMapping(value = "/auth/loginCtr.do", method = RequestMethod.POST)
 	public String loginCtr(String email, String password
 			, HttpSession session, Model model) {
@@ -57,6 +60,7 @@ public class MemberController {
 		return url;
 	}
 	
+	// 로그아웃
 	@RequestMapping(value = "/auth/logout.do", method= RequestMethod.GET)
 	public String logout(Model model, HttpSession session) {
 		logger.info("Welcome MemberController logout! ");
@@ -67,7 +71,7 @@ public class MemberController {
 	}
 	
 	
-	//회원목록 화면
+	// 회원목록 화면
 	@RequestMapping(value = "/member/list.do", method = {RequestMethod.GET, RequestMethod.POST})
 	public String memberList(@RequestParam(defaultValue = "1")int curPage, Model model) {
 		
@@ -91,6 +95,25 @@ public class MemberController {
 		return "member/MemberListView";
 	}
 	
+	// 회원상세 화면
+	@RequestMapping(value = "/member/one.do")
+	public String memberOne(int no, Model model) {
+		logger.info("Welcome memberOne enter! - {}" + no);
+		
+		Map<String, Object> map = memberService.memberSelectOne(no);
+		
+		MemberDto memberDto = (MemberDto)map.get("memberDto");
+		
+		List<Map<String, Object>> fileList
+			= (List<Map<String, Object>>) map.get("fileList");
+		
+		model.addAttribute("memberDto", memberDto);
+		model.addAttribute("fileList", fileList);
+		
+		return "member/MemberOneView";
+	}
+	
+	// 회원추가 화면
 	@RequestMapping(value = "/member/add.do", method = RequestMethod.GET)
 	public String memberAdd(Model model) {
 		logger.debug("Welcome MemberController memberAdd! ");
@@ -99,35 +122,59 @@ public class MemberController {
 		return "member/MemberForm";
 	}
 	
+	// 회원추가
 	@RequestMapping(value = "/member/addCtr.do", method = RequestMethod.POST)
-	public String memberAdd(MemberDto memberDto, Model model) {
-		logger.info("Welcome MemberController memberAdd! " + memberDto);
+	public String memberAdd(MemberDto memberDto,
+			MultipartHttpServletRequest mulRequest ,Model model) {
+		logger.trace("Welcome MemberController memberAdd! " + memberDto);
 		
-		memberService.memberInsertOne(memberDto);
+		try {
+			memberService.memberInsertOne(memberDto, mulRequest);
+		} catch (Exception e) {
+			System.out.println("파일문제 발생");
+			e.printStackTrace();
+		}
 		
 		
 		return "redirect:/member/list.do";
 	}
+	
 	
 	// 회원수정 화면
 	@RequestMapping(value = "/member/update.do", method = RequestMethod.GET)
 	public String memberUpdate(int no, Model model) {
 		logger.info("Welcome MemberController memberUpdate! " + no);
 		
-		MemberDto memberDto = memberService.memberSelectOne(no);
+		Map<String, Object> map = memberService.memberSelectOne(no);
+		
+		MemberDto memberDto = (MemberDto)map.get("memberDto");
+		List<Map<String, Object>> fileList = (List<Map<String, Object>>) map.get("fileList");
 		
 		model.addAttribute("memberDto", memberDto);
+		model.addAttribute("fileList", fileList);
 		
 		return "member/MemberUpdateForm";
 	}
 	
+	
 	// 회원수정
 	@RequestMapping(value = "/member/updateCtr.do", method = RequestMethod.POST)
-	public String memberUpdateCtr(MemberDto memberDto, Model model, HttpSession session) {
-		logger.info("Welcome MemberController memberUpdateCtr! " + memberDto);
+	public String memberUpdateCtr(MemberDto memberDto,
+			@RequestParam(value = "fileIdx", defaultValue = "-1") int fileIdx,
+			MultipartHttpServletRequest multipartHttpServletRequest,
+			Model model, HttpSession session) {
+		logger.info("Welcome MemberController memberUpdateCtr! {} :: {}", memberDto, fileIdx);
 		
-		int resultNum = memberService.memberUpdateOne(memberDto);
+		int resultNum = 0;
 		
+		try {
+			resultNum = memberService.memberUpdateOne(memberDto, multipartHttpServletRequest, fileIdx);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// 데이터베이스에서 회원정보가 수정이 됬는지 여부
 		if(resultNum > 0) {
 			MemberDto memberDtoSession = (MemberDto) session.getAttribute("_memberDto_");
 			
@@ -138,7 +185,9 @@ public class MemberController {
 			}
 		}
 		
-		return "redirect:/member/list.do";
+		model.addAttribute("memberDto", memberDto);
+		
+		return "common/sucessPage";
 	}
 	
 	// 회원탈퇴
